@@ -180,7 +180,7 @@ void stop_daemon(const char *username) {
     kill(pid, SIGTERM);
     remove(PID_FILE);
     log_message("debugmon", "RUNNING");
-    printf("Berhenti monitor dari user %s.\n", username);
+    printf("Berhenti memantau user %s.\n", username);
 }
 
 // ============================================================================
