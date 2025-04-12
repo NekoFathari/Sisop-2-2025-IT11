@@ -39,7 +39,7 @@ void log_message(const char *process_name, const char *status) {
 void list_processes(const char *username) {
     struct passwd *pwd = getpwnam(username);
     if (!pwd) {
-        fprintf(stderr, "User %s not found.\n", username);
+        fprintf(stderr, "User %s tidak ditemukan.\n", username);
         return;
     }
     uid_t target_uid = pwd->pw_uid;
@@ -169,7 +169,7 @@ void daemon_mode(const char *username) {
 void stop_daemon(const char *username) {
     FILE *f = fopen(PID_FILE, "r");
     if (!f) {
-        fprintf(stderr, "Daemon not running.\n");
+        fprintf(stderr, "Daemon tidak running\n");
         return;
     }
 
@@ -180,7 +180,7 @@ void stop_daemon(const char *username) {
     kill(pid, SIGTERM);
     remove(PID_FILE);
     log_message("debugmon", "RUNNING");
-    printf("Stopped monitoring for user %s.\n", username);
+    printf("Berhenti monitor dari user %s.\n", username);
 }
 
 // ============================================================================
@@ -190,7 +190,7 @@ void stop_daemon(const char *username) {
 void fail_user(const char *username) {
     struct passwd *pwd = getpwnam(username);
     if (!pwd) {
-        fprintf(stderr, "User %s not found.\n", username);
+        fprintf(stderr, "User %s tidak ditemukan.\n", username);
         return;
     }
 
@@ -252,7 +252,7 @@ void fail_user(const char *username) {
 
 void revert_user(const char *username) {
     log_message("debugmon", "RUNNING");
-    printf("Monitoring for %s reverted. Processes allowed again.\n", username);
+    printf("Monitor dari user %s telah revert. Proses dijalankan kembali.\n", username);
 }
 
 int main(int argc, char *argv[]) {
@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
     else if (strcmp(argv[1], "fail") == 0) fail_user(argv[2]);
     else if (strcmp(argv[1], "revert") == 0) revert_user(argv[2]);
     else {
-        fprintf(stderr, "Unknown command.\n");
+        fprintf(stderr, "tidak ada perintah yang ditentukan.\n");
         return EXIT_FAILURE;
     }
 
