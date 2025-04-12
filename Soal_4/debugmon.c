@@ -247,7 +247,7 @@ void fail_user(const char *username) {
 
 
 // ============================================================================
-// Fitur 5: revert <user> - Mengembalikan status monitoring (dummy/log only)
+// Fitur 5: revert <user> - Mengembalikan status monitoring 
 // ============================================================================
 
 void revert_user(const char *username) {
