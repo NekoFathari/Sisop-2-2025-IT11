@@ -13,6 +13,10 @@
 #define LOG_FILE "/tmp/debugmon.log"
 #define PID_FILE "/tmp/debugmon.pid"
 
+// ============================================================================
+// format waktu
+// ============================================================================
+
 void log_message(const char *process_name, const char *status) {
     FILE *log = fopen(LOG_FILE, "a");
     if (!log) return;
@@ -27,6 +31,10 @@ void log_message(const char *process_name, const char *status) {
 
     fclose(log);
 }
+
+// ============================================================================
+// Fitur 1: list <user> - Menampilkan proses milik user
+// ============================================================================
 
 void list_processes(const char *username) {
     struct passwd *pwd = getpwnam(username);
@@ -97,6 +105,10 @@ void list_processes(const char *username) {
     closedir(proc);
 }
 
+// ============================================================================
+// Fitur 2: daemon <user> - Monitoring user sebagai daemon
+// ============================================================================
+
 void daemon_mode(const char *username) {
     pid_t pid = fork();
     if (pid < 0) exit(EXIT_FAILURE);
@@ -150,6 +162,10 @@ void daemon_mode(const char *username) {
     }
 }
 
+// ============================================================================
+// Fitur 3: stop <user> - Menghentikan daemon
+// ============================================================================
+
 void stop_daemon(const char *username) {
     FILE *f = fopen(PID_FILE, "r");
     if (!f) {
@@ -166,6 +182,10 @@ void stop_daemon(const char *username) {
     log_message("debugmon", "RUNNING");
     printf("Stopped monitoring for user %s.\n", username);
 }
+
+// ============================================================================
+// Fitur 4: fail <user> - Mematikan proses user yang tidak diizinkan
+// ============================================================================
 
 void fail_user(const char *username) {
     struct passwd *pwd = getpwnam(username);
@@ -224,6 +244,11 @@ void fail_user(const char *username) {
 
     closedir(proc);
 }
+
+
+// ============================================================================
+// Fitur 5: revert <user> - Mengembalikan status monitoring (dummy/log only)
+// ============================================================================
 
 void revert_user(const char *username) {
     log_message("debugmon", "RUNNING");
