@@ -103,58 +103,58 @@ Disini akan menampilkan daftar semua proses yang sedang berjalan pada user terse
 Disini debugmon akan terus memantau user secara otomatis
 
 
-  void daemon_mode(const char *username) {
-    pid_t pid = fork();
-    if (pid < 0) exit(EXIT_FAILURE);
-    if (pid > 0) {
-        FILE *f = fopen(PID_FILE, "w");
-        if (f) {
-            fprintf(f, "%d", pid);
-            fclose(f);
-        }
-        exit(EXIT_SUCCESS);
-    }
-
-    setsid();
-    chdir("/");
-    close(STDIN_FILENO);
-    close(STDOUT_FILENO);
-    close(STDERR_FILENO);
-
-    struct passwd *pwd = getpwnam(username);
-    if (!pwd) exit(EXIT_FAILURE);
-    uid_t target_uid = pwd->pw_uid;
-
-    while (1) {
-        DIR *proc = opendir("/proc");
-        if (!proc) exit(EXIT_FAILURE);
-
-        struct dirent *entry;
-        while ((entry = readdir(proc)) != NULL) {
-            if (!isdigit(entry->d_name[0])) continue;
-
-            char status_path[512];
-            snprintf(status_path, sizeof(status_path), "/proc/%s/status", entry->d_name);
-            FILE *status = fopen(status_path, "r");
-            if (!status) continue;
-
-            char line[256], name[256] = "";
-            uid_t uid = -1;
-            while (fgets(line, sizeof(line), status)) {
-                if (strncmp(line, "Uid:", 4) == 0)
-                    sscanf(line, "Uid:\t%d", &uid);
-                if (strncmp(line, "Name:", 5) == 0)
-                    sscanf(line, "Name:\t%255s", name);
+      void daemon_mode(const char *username) {
+        pid_t pid = fork();
+        if (pid < 0) exit(EXIT_FAILURE);
+        if (pid > 0) {
+            FILE *f = fopen(PID_FILE, "w");
+            if (f) {
+                fprintf(f, "%d", pid);
+                fclose(f);
             }
-
-            fclose(status);
-            if (uid == target_uid) log_message(name, "RUNNING");
+            exit(EXIT_SUCCESS);
         }
-
-        closedir(proc);
-        sleep(5);
+    
+        setsid();
+        chdir("/");
+        close(STDIN_FILENO);
+        close(STDOUT_FILENO);
+        close(STDERR_FILENO);
+    
+        struct passwd *pwd = getpwnam(username);
+        if (!pwd) exit(EXIT_FAILURE);
+        uid_t target_uid = pwd->pw_uid;
+    
+        while (1) {
+            DIR *proc = opendir("/proc");
+            if (!proc) exit(EXIT_FAILURE);
+    
+            struct dirent *entry;
+            while ((entry = readdir(proc)) != NULL) {
+                if (!isdigit(entry->d_name[0])) continue;
+    
+                char status_path[512];
+                snprintf(status_path, sizeof(status_path), "/proc/%s/status", entry->d_name);
+                FILE *status = fopen(status_path, "r");
+                if (!status) continue;
+    
+                char line[256], name[256] = "";
+                uid_t uid = -1;
+                while (fgets(line, sizeof(line), status)) {
+                    if (strncmp(line, "Uid:", 4) == 0)
+                        sscanf(line, "Uid:\t%d", &uid);
+                    if (strncmp(line, "Name:", 5) == 0)
+                        sscanf(line, "Name:\t%255s", name);
+                }
+    
+                fclose(status);
+                if (uid == target_uid) log_message(name, "RUNNING");
+            }
+    
+            closedir(proc);
+            sleep(5);
+          }
       }
-  }
 
 # Output
 ![image](https://github.com/user-attachments/assets/ea6f4b1d-7e6a-44c7-8904-593adf0ef3e3)
@@ -163,24 +163,26 @@ Disini debugmon akan terus memantau user secara otomatis
 ## C. Menghentikan pengawasan (./debugmon stop user)
 Disini untuk menghentikan commandnya yang sedang berjalan di user tersebut.
 
-  void stop_daemon(const char *username) {
-    FILE *f = fopen(PID_FILE, "r");
-    if (!f) {
-        fprintf(stderr, "Daemon tidak running\n");
-        return;
-    }
-
-    pid_t pid;
-    fscanf(f, "%d", &pid);
-    fclose(f);
-
-    kill(pid, SIGTERM);
-    remove(PID_FILE);
-    log_message("debugmon", "RUNNING");
-    printf("Berhenti memantau user %s.\n", username);
-  }
+     
+      void stop_daemon(const char *username) {
+        FILE *f = fopen(PID_FILE, "r");
+        if (!f) {
+            fprintf(stderr, "Daemon tidak running\n");
+            return;
+        }
+    
+        pid_t pid;
+        fscanf(f, "%d", &pid);
+        fclose(f);
+    
+        kill(pid, SIGTERM);
+        remove(PID_FILE);
+        log_message("debugmon", "RUNNING");
+        printf("Berhenti memantau user %s.\n", username);
+      }
 
 # Output
-![image](https://github.com/user-attachments/assets/58896be4-341f-48cd-aad3-62093cfa5ff3)
+![image](https://github.com/user-attachments/assets/fb2e7dcb-1f30-4a39-a889-efd2dd9de37c)
+
 
 ## D. Menggagalkan semua proses user yang sedang berjalan (./debugmon fail user)
