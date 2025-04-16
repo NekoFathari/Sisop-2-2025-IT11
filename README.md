@@ -13,11 +13,13 @@
 ### Soal 3
 ### Soal 4
 Membuat Sebuah Fitur yang bisa memantau semua aktivitas di komputer. Berikut adalah fitur fitur yang dimiliki oleh debugmon
-A. Mengetahui semua aktivitas user (./debugmon list user)
-B. Memasang mata mata dalam mode daemon (./debugmon daemon user)
-C. Menghentikan pengawasan (./debugmon stop user)
-D. Menggagalkan semua proses user yang sedang berjalan (./debugmon fail user)
-E. Mengizinkan user untuk kembali menjalankan proses (./debugmon revert user)
+
+    A. Mengetahui semua aktivitas user (./debugmon list user)
+    B. Memasang mata mata dalam mode daemon (./debugmon daemon user)
+    C. Menghentikan pengawasan (./debugmon stop user)
+    D. Menggagalkan semua proses user yang sedang berjalan (./debugmon fail user)
+    E. Mengizinkan user untuk kembali menjalankan proses (./debugmon revert user)
+    
 Semua fitur yang telah diperintahkan akan dicatat ke dalam file log (/tmp/debugmon.log) lalu ada format waktu seperti [dd:mm:yyyy]-[hh:mm:ss]_nama-process_STATUS(RUNNING/FAILED)
 
 ## A. Mengetahui semua aktivitas user (./debugmon list user)
