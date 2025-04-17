@@ -9,6 +9,56 @@
 # Reporting
 
 ### Soal 1
+Penjelasan Soal No. 1
+![image](https://github.com/user-attachments/assets/3b3601f4-009d-4bda-b3d4-740ff979e9ff)
+Soal ini memberikan chalenge untuk mencari password dari sebuah data berupa Clues.zip untuk masuk kedalam website, dari penjelasan soal kita perlu membuat sebuah file action.c dimana isi dari file tersebut berupa program untuk
+
+A.Mendownload Clues.zip dan unzip
+B.Filtering the files
+C.Combine teh file content
+D.Decode the file
+E.Password check
+
+Penjelasan code action.c :
+
+1. Library yang dipakai 
+![image](https://github.com/user-attachments/assets/52df75c4-f609-4d22-ae6c-386c089451bf)
+<sys/stat.h>  fungsi mkdir()
+<unistd.h>     execvp(), fork(), access file
+<dirent.h>      baca folder
+<ctype.h>       cek huruf/angka
+<sys/wait.h>  buat tunggu child process (wait)
+
+2.Menjalankan Command terminal
+![image](https://github.com/user-attachments/assets/ce482e83-c3ed-434c-92b6-12898bb89f87)
+
+3.Download file zip dan unzip
+![image](https://github.com/user-attachments/assets/8fbf2237-d80a-40be-a6b5-71eb0412efe2)
+Untuk mendownload file kita memakai command wget -o seperti di terminal, ini bisa dilakukan di c dengan memakai bantuan execvp(), begitu juga untuk unzip dan rm file 
+
+4.Mengecek apakah nama file valid untuk di filter 
+![image](https://github.com/user-attachments/assets/bfaa5021-a8ed-4518-b075-9476971b2ea8)
+Dari soal yang diberikan kita diminta untuk membuat folder baru bernama filtered yang berisi file yang valid. Hal ini memerlukan pengecekan untuk penamaan file yang berada di dalam folder melalui validNama
+
+5.Urutin string alfabet secara ascending agar urut filenya
+![image](https://github.com/user-attachments/assets/7c45c04c-9ce0-41d5-9175-bd815b9c652b)
+Supaya file menjadi urut dan mudah untuk menggabungkan di next code
+6.Menggabungkan file
+![image](https://github.com/user-attachments/assets/22da6447-cb8d-445a-bae0-36e9a27fa0a8)
+
+7.Fungsi ROT13
+![image](https://github.com/user-attachments/assets/15bfcff6-fc9b-4487-ac8f-2753d4df7fe3)
+
+8.Decode File
+![image](https://github.com/user-attachments/assets/6dc22cd1-5b5d-42ec-be9f-636ecc616897)
+
+9.Int main 
+![image](https://github.com/user-attachments/assets/fb8ddc5e-424f-493a-b57e-f3897fa624e1)
+
+Ini untuk menjalankan command mulai dari download unzip, filter, combine dan decode 
+Dan berisi error handling seperti yang disarankan di soal
+
+
 ### Soal 2
 ### Soal 3
 ### Soal 4
