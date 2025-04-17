@@ -186,11 +186,83 @@ Disini untuk menghentikan commandnya yang sedang berjalan di user tersebut.
 
 
 ## D. Menggagalkan semua proses user yang sedang berjalan (./debugmon fail user)
+Debugmon langsung menggagalkan semua proses yang sedang berjalan dan menulis status proses.
+
+
+        void fail_user(const char *username) {
+    struct passwd *pwd = getpwnam(username);
+    if (!pwd) {
+        fprintf(stderr, "User %s tidak ditemukan.\n", username);
+        return;
+    }
+
+    uid_t target_uid = pwd->pw_uid;
+    const char *allowed[] = {"bash", "sh", "zsh", "debugmon", "sleep"};
+
+    DIR *proc = opendir("/proc");
+    if (!proc) {
+        perror("opendir /proc");
+        return;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(proc)) != NULL) {
+        if (!isdigit(entry->d_name[0])) continue;
+
+        char status_path[512];
+        snprintf(status_path, sizeof(status_path), "/proc/%s/status", entry->d_name);
+        FILE *status = fopen(status_path, "r");
+        if (!status) continue;
+
+        char line[256], name[256] = "";
+        uid_t uid = -1;
+
+        while (fgets(line, sizeof(line), status)) {
+            if (strncmp(line, "Uid:", 4) == 0)
+                sscanf(line, "Uid:\t%d", &uid);
+            if (strncmp(line, "Name:", 5) == 0)
+                sscanf(line, "Name:\t%255s", name);
+        }
+
+        fclose(status);
+        if (uid != target_uid) continue;
+
+        int allowed_flag = 0;
+        for (int i = 0; i < sizeof(allowed)/sizeof(allowed[0]); i++) {
+            if (strcmp(name, allowed[i]) == 0) {
+                allowed_flag = 1;
+                break;
+            }
+        }
+
+        if (!allowed_flag) {
+            pid_t victim = atoi(entry->d_name);
+            if (kill(victim, SIGKILL) == 0)
+                log_message(name, "FAILED");
+            else
+                log_message(name, "KILL_FAILED");
+            }
+        }
+
+    closedir(proc);
+    }
+
+
 
 # Output 
 ![image](https://github.com/user-attachments/assets/329e711e-5f82-4147-aea4-08afd8681a13)
 
+lalu user juga tidak dapat menjalankan proses lain dalam mode ini
+![failed](https://github.com/user-attachments/assets/eb255c27-bcfc-4a18-949c-27ca906a3f37)
+
 ## E. Mengizinkan user untuk kembali menjalankan proses (./debugmon revert user)
+dengan ini debugmon kembali ke mode normal dan bisa menjalankan proses lain seperti biasa
+
+
+        void revert_user(const char *username) {
+    log_message("debugmon", "RUNNING");
+    printf("Monitor dari user %s telah revert. Proses dijalankan kembali.\n", username);
+    }        
 
 # Output
 ![image](https://github.com/user-attachments/assets/ed5700f4-d22f-4a3b-9910-0d8765cce3bb)
