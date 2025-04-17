@@ -253,6 +253,8 @@ Debugmon langsung menggagalkan semua proses yang sedang berjalan dan menulis sta
 ![image](https://github.com/user-attachments/assets/329e711e-5f82-4147-aea4-08afd8681a13)
 
 lalu user juga tidak dapat menjalankan proses lain dalam mode ini
+
+
 ![failed](https://github.com/user-attachments/assets/eb255c27-bcfc-4a18-949c-27ca906a3f37)
 
 ## E. Mengizinkan user untuk kembali menjalankan proses (./debugmon revert user)
