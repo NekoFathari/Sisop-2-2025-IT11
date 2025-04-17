@@ -230,7 +230,9 @@ execl("/bin/sh", "sh", "-c", "rm -rf quarantine/*", NULL);
                 "xargs -d '\n' rm -v",
                 NULL};
     execve("/bin/sh", args, NULL);
-```### Soal 3
+```
+
+### Soal 3
 ### Soal 4
 Membuat Sebuah Fitur yang bisa memantau semua aktivitas di komputer. Berikut adalah fitur fitur yang dimiliki oleh debugmon
 
