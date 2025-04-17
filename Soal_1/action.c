@@ -17,6 +17,14 @@ void run(char *args[]) {
 }
 
 void downloadDanUnzip() {
+    struct stat st;
+
+    // Cek apakah folder Clues sudah ada
+    if (stat("Clues", &st) == 0 && S_ISDIR(st.st_mode)) {
+        printf("Folder Clues sudah ada, skip download dan unzip.\n");
+        return;
+    }
+
     char *dl[] = {
         "wget", "-O", "Clues.zip",
         "https://drive.usercontent.google.com/u/0/uc?id=1xFn1OBJUuSdnApDseEczKhtNzyGekauK&export=download",
@@ -46,7 +54,6 @@ void filterFile() {
             char asal[512], tujuan[512];
             snprintf(asal, sizeof(asal), "%s/%s", clue[i], ent->d_name);
 
-            // langsung cek nama file aja, tanpa cek tipe file
             if (validNama(ent->d_name)) {
                 snprintf(tujuan, sizeof(tujuan), "Filtered/%s", ent->d_name);
                 rename(asal, tujuan);
