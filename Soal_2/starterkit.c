@@ -11,6 +11,24 @@
 #include <time.h>
 
 void stepa(){
+    sleep(5);
+    // check apakah starterkit.zip sudah ada
+    if (access("starterkit.zip", F_OK) != -1) {
+        printf("starterkit.zip sudah ada.\n");
+        printf("Silahkan jalankan ./starterkit --decrypt untuk mendekripsi file.\n");
+        printf("Apakah Anda ingin menjalankan download zip? (y/n): ");
+        char response;
+        scanf(" %c", &response);
+        while (response != 'y' && response != 'Y' && response != 'n' && response != 'N') {
+            printf("Input tidak valid. Apakah Anda ingin menjalankan download zip? (y/n): ");
+            scanf(" %c", &response);
+        }
+        if (response != 'y' && response != 'Y') {
+            printf("Download dibatalkan.\n");
+            return;
+        }
+    }
+
     printf("Downloading starterkit.zip...\n");
     // download file https://drive.usercontent.google.com/u/0/uc?id=1_5GxIGfQr3mNKuavJbte_AoRkEQLXSKS&export=download dengan wget
     char *url = "https://drive.usercontent.google.com/u/0/uc?id=1_5GxIGfQr3mNKuavJbte_AoRkEQLXSKS&export=download";
@@ -119,8 +137,17 @@ void stepb() {
         exit(EXIT_FAILURE);
     }
 
-    if ((chdir("/")) < 0) {
-        perror("Gagal mengubah direktori kerja");
+    // getpwd 
+
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        perror("Gagal mendapatkan direktori kerja saat ini");
+        exit(EXIT_FAILURE);
+    }
+    printf("Direktori kerja saat ini: %s\n", cwd);
+
+    if (chdir(cwd) != 0) {
+        perror("Gagal mengatur direktori kerja");
         exit(EXIT_FAILURE);
     }
 
@@ -129,14 +156,26 @@ void stepb() {
     close(STDERR_FILENO);
 
     while (1) {
-        system("find quarantine -type f -printf '%P\\n' | "
-               "xargs -I {} bash -c 'echo \"{}\" | base64 -d 2>/dev/null | iconv -f ASCII -t UTF-8 2>/dev/null' | "
-               "awk '{ remaining = $0; while (match(remaining, /([^.]+\\.(vbs|js|dll|bin|exe|py|jar|sys|bat))/)) { print \"quarantine/\" substr(remaining, RSTART, RLENGTH); remaining = substr(remaining, RSTART + RLENGTH); } if (remaining != \"\") { print \"quarantine/\" remaining; } }' | "
-               "xargs -n 1 touch && "
-               "find quarantine -type f -printf '%P\\n' | "
-               "awk '{if ($0 ~ /^[A-Za-z0-9+\\/]+=*$/) { print \"quarantine/\" $0 }}' | "
-               "xargs -d '\n' rm -v");
-
+        pid_t exec_pid = fork();
+        if (exec_pid == 0) {
+            char *args[] = {"/bin/sh", "-c",
+                "find quarantine -type f -printf '%P\\n' | "
+                "xargs -I {} bash -c 'echo \"{}\" | base64 -d 2>/dev/null | iconv -f ASCII -t UTF-8 2>/dev/null' | "
+                "awk '{ remaining = $0; while (match(remaining, /([^.]+\\.(vbs|js|dll|bin|exe|py|jar|sys|bat))/)) { print \"quarantine/\" substr(remaining, RSTART, RLENGTH); remaining = substr(remaining, RSTART + RLENGTH); } if (remaining != \"\") { print \"quarantine/\" remaining; } }' | "
+                "xargs -n 1 touch && "
+                "find quarantine -type f -printf '%P\\n' | "
+                "awk '{if ($0 ~ /^[A-Za-z0-9+\\/]+=*$/) { print \"quarantine/\" $0 }}' | "
+                "xargs -d '\n' rm -v",
+                NULL};
+            execve("/bin/sh", args, NULL);
+            perror("Failed to execute command");
+            exit(EXIT_FAILURE);
+        } else if (exec_pid > 0) {
+            wait(NULL); // Wait for the child process to finish
+        } else {
+            perror("Failed to fork process");
+            exit(EXIT_FAILURE);
+        }
         sleep(30);
     }
   }
@@ -230,6 +269,11 @@ void stepf(){
 
 int main(int argc, char *argv[]) {
 
+    if (argc > 2) {
+        fprintf(stderr, "Error: Flag tidak boleh lebih dari 1.\n");
+        return EXIT_FAILURE;
+    }
+
     if (argc > 1 && strcmp(argv[1], "--decrypt") == 0) {
         printf("Decrypting...\n");
         stepb();
@@ -246,7 +290,15 @@ int main(int argc, char *argv[]) {
         printf("Shutting down...\n");
         stepf();
     } else {
-        printf("Usage: ./starterkit --decrypt\n");
+        printf("Penggunaan: ./starterkit --<flag>\n");
+        printf("Pilihan flag:\n");
+        printf("  --decrypt    : Mendekripsi file di folder quarantine\n");
+        printf("  --return     : Memindahkan file dari folder quarantine ke starter_kit\n");
+        printf("  --quarantine : Memindahkan file dari folder starter_kit ke quarantine\n");
+        printf("  --eradicate  : Menghapus folder quarantine\n");
+        printf("  --shutdown   : Mematikan proses dekripsi\n");
+        printf(" ");
+        printf("Jika tidak ada flag yang diberikan, maka akan melakukan download starterkit.zip\n");
         stepa();
     }
     return 0;
