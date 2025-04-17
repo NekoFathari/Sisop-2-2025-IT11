@@ -20,7 +20,10 @@ Membuat Sebuah Fitur yang bisa memantau semua aktivitas di komputer. Berikut ada
     D. Menggagalkan semua proses user yang sedang berjalan (./debugmon fail user)
     E. Mengizinkan user untuk kembali menjalankan proses (./debugmon revert user)
     
-Semua fitur yang telah diperintahkan akan dicatat ke dalam file log (/tmp/debugmon.log) lalu ada format waktu seperti [dd:mm:yyyy]-[hh:mm:ss]_nama-process_STATUS(RUNNING/FAILED)
+Semua fitur yang telah diperintahkan akan dicatat ke dalam file log (/tmp/debugmon.log) lalu ada format waktu seperti 
+
+
+    [dd:mm:yyyy]-[hh:mm:ss]_nama-process_STATUS(RUNNING/FAILED)
 
 ## A. Mengetahui semua aktivitas user (./debugmon list user)
 Disini akan menampilkan daftar semua proses yang sedang berjalan pada user tersebut beserta PID, command, CPU usage dan memory usage 
