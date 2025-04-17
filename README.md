@@ -186,3 +186,15 @@ Disini untuk menghentikan commandnya yang sedang berjalan di user tersebut.
 
 
 ## D. Menggagalkan semua proses user yang sedang berjalan (./debugmon fail user)
+
+# Output 
+![image](https://github.com/user-attachments/assets/329e711e-5f82-4147-aea4-08afd8681a13)
+
+## E. Mengizinkan user untuk kembali menjalankan proses (./debugmon revert user)
+
+# Output
+![image](https://github.com/user-attachments/assets/ed5700f4-d22f-4a3b-9910-0d8765cce3bb)
+
+
+
+
