@@ -60,7 +60,177 @@ Dan berisi error handling seperti yang disarankan di soal
 
 
 ### Soal 2
-### Soal 3
+Membuat suatu fitur yang dapat membantu Kenade. Berikut beberapa fitur yang harus didapatkan di starterkit.c
+
+```
+A. Mendownload dan unzip dan melakukan penghapusan file asli zip
+B. Mendecrypt file Base64
+C. Memindahkan file
+D. Mematikan file starterkit dengan aman
+E. Menambahkan Error handling
+F. Mencatat Aktivitas starterkit
+```
+
+### A. Mendownload dan unzip dan melakukan penghapusan file asli zip
+Kita melakukan pendownloadan terlebih dahulu sesuai yang diminta.
+
+    char *url = "https://drive.usercontent.google.com/u/0/uc?id=1_5GxIGfQr3mNKuavJbte_AoRkEQLXSKS&export=download";
+    char *args[] = {"/usr/bin/wget", "-O", "starterkit.zip", url, NULL};
+
+    ....
+
+    execve("/usr/bin/wget", args, NULL);
+
+    ....
+
+Selanjutnya kita melakukan unzip
+
+    char *unzip_args[] = {"/usr/bin/unzip", "starterkit.zip", "-d", "starter_kit", NULL}; //set argumentnya, kalau di shell harusnya (unzip starterkit.zip -d starter_kit)
+    ....
+
+    execve("/usr/bin/unzip", unzip_args, NULL);
+    ....
+
+Habis itu kita menghapus zipnya
+        
+    if (remove("starterkit.zip") != 0) {
+        perror("Failed to delete starterkit.zip");
+        exit(EXIT_FAILURE);
+    }
+
+### B. Mendecrypt file Base64
+Disini kita membuat decrypt dengan daemon
+
+```
+ pid_t pid, sid; // Variabel untuk menyimpan PID
+
+    pid = fork(); // Menyimpan PID dari Child Process
+
+    /* Keluar saat fork gagal
+     * (nilai variabel pid < 0) */
+    if (pid < 0) {
+        perror("Gagal membuat proses fork");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Keluar saat fork berhasil
+     * (nilai variabel pid adalah PID dari child process) */
+    if (pid > 0) {
+        printf("Proses daemon untuk enkripsi telah dimulai.\n");
+        exit(EXIT_SUCCESS);
+    }
+
+    umask(0);
+
+    sid = setsid();
+    if (sid < 0) {
+        perror("Gagal membuat session baru");
+        exit(EXIT_FAILURE);
+    }
+
+    ....
+
+    while (1) {
+        pid_t exec_pid = fork();
+        if (exec_pid == 0) {
+            char *args[] = {"/bin/sh", "-c",
+                "find quarantine -type f -printf '%P\\n' | "
+                "xargs -I {} bash -c 'echo \"{}\" | base64 -d 2>/dev/null | iconv -f ASCII -t UTF-8 2>/dev/null' | "
+                "awk '{ remaining = $0; while (match(remaining, /([^.]+\\.(vbs|js|dll|bin|exe|py|jar|sys|bat))/)) { print \"quarantine/\" substr(remaining, RSTART, RLENGTH); remaining = substr(remaining, RSTART + RLENGTH); } if (remaining != \"\") { print \"quarantine/\" remaining; } }' | "
+                "xargs -n 1 touch && "
+                "find quarantine -type f -printf '%P\\n' | "
+                "awk '{if ($0 ~ /^[A-Za-z0-9+\\/]+=*$/) { print \"quarantine/\" $0 }}' | "
+                "xargs -d '\n' rm -v",
+                NULL};
+            execve("/bin/sh", args, NULL);
+        .....
+        sleep(30);
+    }
+```
+### C. Memindahkan file
+Kita melakukan perpindahan file dari quarantine ke starter_kit baik sebaliknya 
+```
+
+execl("/bin/sh", "sh", "-c", "find starter_kit -type f -exec sh -c 'mv \"$1\" quarantine/", NULL);
+
+....
+
+execl("/bin/sh", "sh", "-c", "find quarantine -type f -exec sh -c 'mv \"$1\" starter_kit/", NULL);
+
+```
+
+### D. Mematikan file starterkit dengan aman
+Kita melakukan shutdown proses dengan kill PIDnya
+```
+execl("/bin/sh", "sh", "-c", "ps aux | grep './starterkit --decrypt' | grep -v grep | awk '{print $2}' | while read pid; do kill -9 $pid; done", NULL);
+```
+
+### E. Menambahkan Error handling
+
+```
+} else {
+        printf("Penggunaan: ./starterkit --<flag>\n");
+        printf("Pilihan flag:\n");
+        printf("  --decrypt    : Mendekripsi file di folder quarantine\n");
+        printf("  --return     : Memindahkan file dari folder quarantine ke starter_kit\n");
+        printf("  --quarantine : Memindahkan file dari folder starter_kit ke quarantine\n");
+        printf("  --eradicate  : Menghapus folder quarantine\n");
+        printf("  --shutdown   : Mematikan proses dekripsi\n");
+        printf(" ");
+        printf("Jika tidak ada flag yang diberikan, maka akan melakukan download starterkit.zip\n");
+        stepa();
+}
+```
+### F. Mencatat Aktivitas starterkit
+```
+....
+"echo \"[$(date '+%%d-%%m-%%Y')][$(date '+%%H:%%M:%%S')] - Successfully started decryption process with PID %d.\" >> activity.log",
+...
+...
+execl("/bin/sh", "sh", "-c", "find starter_kit -type f -exec sh -c 'mv \"$1\" quarantine/ && echo \"[$(date '+%d-%m-%Y')][$(date '+%H:%M:%S')] - $(basename \"$1\") - Successfully moved to quarantine directory.\" >> activity.log' _ {} \\;", NULL);
+...
+...
+execl("/bin/sh", "sh", "-c", "find quarantine -type f -exec sh -c 'mv \"$1\" starter_kit/ && echo \"[$(date '+%d-%m-%Y')][$(date '+%H:%M:%S')] - $(basename \"$1\") - Successfully moved to starter_kit directory.\" >> activity.log' _ {} \\;", NULL);
+...
+...
+execl("/bin/sh", "sh", "-c", "find quarantine -type f -exec sh -c 'echo \"[$(date '+%d-%m-%Y')][$(date '+%H:%M:%S')] - $(basename \"$1\") - Successfully deleted.\" >> activity.log' _ {} \\;", NULL);
+...
+...
+execl("/bin/sh", "sh", "-c", "ps aux | grep './starterkit --decrypt' | grep -v grep | awk '{print $2}' | while read pid; do echo \"[$(date '+%d-%m-%Y')][$(date '+%H:%M:%S')] - Successfully shut off decryption process with PID $pid.\" >> activity.log; kill -9 $pid; done", NULL);
+...
+```
+
+### G. Hapus file quarantine
+
+```
+execl("/bin/sh", "sh", "-c", "rm -rf quarantine/*", NULL);
+
+```
+
+### Revisi No 2
+```
+        system("find quarantine -type f -printf '%P\\n' | "
+               "xargs -I {} bash -c 'echo \"{}\" | base64 -d 2>/dev/null | iconv -f ASCII -t UTF-8 2>/dev/null' | "
+               "awk '{ remaining = $0; while (match(remaining, /([^.]+\\.(vbs|js|dll|bin|exe|py|jar|sys|bat))/)) { print \"quarantine/\" substr(remaining, RSTART, RLENGTH); remaining = substr(remaining, RSTART + RLENGTH); } if (remaining != \"\") { print \"quarantine/\" remaining; } }' | "
+               "xargs -n 1 touch && "
+               "find quarantine -type f -printf '%P\\n' | "
+               "awk '{if ($0 ~ /^[A-Za-z0-9+\\/]+=*$/) { print \"quarantine/\" $0 }}' | "
+               "xargs -d '\n' rm -v");
+        sleep(1);
+
+    // change to 
+
+    char *args[] = {"/bin/sh", "-c",
+                "find quarantine -type f -printf '%P\\n' | "
+                "xargs -I {} bash -c 'echo \"{}\" | base64 -d 2>/dev/null | iconv -f ASCII -t UTF-8 2>/dev/null' | "
+                "awk '{ remaining = $0; while (match(remaining, /([^.]+\\.(vbs|js|dll|bin|exe|py|jar|sys|bat))/)) { print \"quarantine/\" substr(remaining, RSTART, RLENGTH); remaining = substr(remaining, RSTART + RLENGTH); } if (remaining != \"\") { print \"quarantine/\" remaining; } }' | "
+                "xargs -n 1 touch && "
+                "find quarantine -type f -printf '%P\\n' | "
+                "awk '{if ($0 ~ /^[A-Za-z0-9+\\/]+=*$/) { print \"quarantine/\" $0 }}' | "
+                "xargs -d '\n' rm -v",
+                NULL};
+    execve("/bin/sh", args, NULL);
+```### Soal 3
 ### Soal 4
 Membuat Sebuah Fitur yang bisa memantau semua aktivitas di komputer. Berikut adalah fitur fitur yang dimiliki oleh debugmon
 
