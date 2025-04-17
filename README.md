@@ -22,7 +22,16 @@ E.Password check
 Penjelasan code action.c :
 
 1. Library yang dipakai 
-![image](https://github.com/user-attachments/assets/52df75c4-f609-4d22-ae6c-386c089451bf)
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <ctype.h>
+#include <sys/wait.h>
+```
 <sys/stat.h>  fungsi mkdir()
 <unistd.h>     execvp(), fork(), access file
 <dirent.h>      baca folder
@@ -30,32 +39,161 @@ Penjelasan code action.c :
 <sys/wait.h>  buat tunggu child process (wait)
 
 2.Menjalankan Command terminal
-![image](https://github.com/user-attachments/assets/ce482e83-c3ed-434c-92b6-12898bb89f87)
+```  
+void run(char *args[]) {
+    if (fork() == 0) {
+        execvp(args[0], args);
+        exit(1);
+    } else {
+        wait(NULL);
+    }
+}
+```
 
 3.Download file zip dan unzip
-![image](https://github.com/user-attachments/assets/8fbf2237-d80a-40be-a6b5-71eb0412efe2)
+``` 
+void downloadDanUnzip() {
+    struct stat st;
+
+    // Cek apakah folder Clues sudah ada
+    if (stat("Clues", &st) == 0 && S_ISDIR(st.st_mode)) {
+        printf("Folder Clues sudah ada, skip download dan unzip.\n");
+        return;
+    }
+
+    char *dl[] = {
+        "wget", "-O", "Clues.zip",
+        "https://drive.usercontent.google.com/u/0/uc?id=1xFn1OBJUuSdnApDseEczKhtNzyGekauK&export=download",
+        NULL
+    };
+    char *uz[] = {"unzip", "Clues.zip", NULL};
+    char *rmz[] = {"rm", "Clues.zip", NULL};
+
+    run(dl);
+    run(uz);
+    run(rmz);
+}
+```
 Untuk mendownload file kita memakai command wget -o seperti di terminal, ini bisa dilakukan di c dengan memakai bantuan execvp(), begitu juga untuk unzip dan rm file 
 
 4.Mengecek apakah nama file valid untuk di filter 
-![image](https://github.com/user-attachments/assets/bfaa5021-a8ed-4518-b075-9476971b2ea8)
+```
+int validNama(const char *nama) {
+    return strlen(nama) == 5 && isalnum(nama[0]) && strcmp(nama+1, ".txt") == 0;
+}
+```
+```
+void filterFile() {
+    mkdir("Filtered", 0755);
+
+    const char *clue[] = {"Clues/ClueA", "Clues/ClueB", "Clues/ClueC", "Clues/ClueD"};
+    for (int i = 0; i < 4; i++) {
+        DIR *dir = opendir(clue[i]);
+        struct dirent *ent;
+
+        while ((ent = readdir(dir)) != NULL) {
+            char asal[512], tujuan[512];
+            snprintf(asal, sizeof(asal), "%s/%s", clue[i], ent->d_name);
+
+            if (validNama(ent->d_name)) {
+                snprintf(tujuan, sizeof(tujuan), "Filtered/%s", ent->d_name);
+                rename(asal, tujuan);
+            } else {
+                remove(asal);
+            }
+        }
+
+        closedir(dir);
+    }
+}
+
+```
 Dari soal yang diberikan kita diminta untuk membuat folder baru bernama filtered yang berisi file yang valid. Hal ini memerlukan pengecekan untuk penamaan file yang berada di dalam folder melalui validNama
 
 5.Urutin string alfabet secara ascending agar urut filenya
-![image](https://github.com/user-attachments/assets/7c45c04c-9ce0-41d5-9175-bd815b9c652b)
+```
+int banding(const void *a, const void *b) {
+    return strcmp(*(char **)a, *(char **)b);
+}
+
+```
+
 Supaya file menjadi urut dan mudah untuk menggabungkan di next code
 6.Menggabungkan file
-![image](https://github.com/user-attachments/assets/22da6447-cb8d-445a-bae0-36e9a27fa0a8)
+```
+DIR *dir = opendir("Filtered");
+    char *angka[100], *huruf[100];
+    int ca = 0, ch = 0;
+
+    struct dirent *ent;
+    while ((ent = readdir(dir)) != NULL) {
+        if (strlen(ent->d_name) == 5) {
+            if (isdigit(ent->d_name[0])) angka[ca++] = strdup(ent->d_name);
+            else if (isalpha(ent->d_name[0])) huruf[ch++] = strdup(ent->d_name);
+        }
+    }
+    closedir(dir);
+
+    qsort(angka, ca, sizeof(char*), banding);
+    qsort(huruf, ch, sizeof(char*), banding);
+
+    FILE *out = fopen("Combined.txt", "w");
+
+    int i = 0;
+    while (i < ca || i < ch) {
+        if (i < ca) {
+            char path[512];
+            snprintf(path, sizeof(path), "Filtered/%s", angka[i]);
+            FILE *f = fopen(path, "r");
+            char c = fgetc(f);
+            if (c != EOF) fputc(c, out);
+            fclose(f);
+            remove(path);
+        }
+        if (i < ch) {
+            char path[512];
+            snprintf(path, sizeof(path), "Filtered/%s", huruf[i]);
+            FILE *f = fopen(path, "r");
+            char c = fgetc(f);
+            if (c != EOF) fputc(c, out);
+            fclose(f);
+            remove(path);
+        }
+        i++;
+    }
+
+    fclose(out);
+}
+
+```
+
 
 7.Fungsi ROT13
-![image](https://github.com/user-attachments/assets/15bfcff6-fc9b-4487-ac8f-2753d4df7fe3)
+```
+ if (c >= 'a' && c <= 'z') return ((c - 'a' + 13) % 26) + 'a';
+    if (c >= 'A' && c <= 'Z') return ((c - 'A' + 13) % 26) + 'A';
+    return c;
+}
+```
 
 8.Decode File
-![image](https://github.com/user-attachments/assets/6dc22cd1-5b5d-42ec-be9f-636ecc616897)
+```
+void decodeFile() {
+    FILE *in = fopen("Combined.txt", "r");
+    FILE *out = fopen("Decoded.txt", "w");
 
-9.Int main 
-![image](https://github.com/user-attachments/assets/fb8ddc5e-424f-493a-b57e-f3897fa624e1)
+    char c;
+    while ((c = fgetc(in)) != EOF) {
+        fputc(rot13(c), out);
+    }
 
-Ini untuk menjalankan command mulai dari download unzip, filter, combine dan decode 
+    fclose(in);
+    fclose(out);
+}
+```
+
+9.Int main
+ini untuk menjalankan command mulai dari download unzip, filter, combine dan decode 
 Dan berisi error handling seperti yang disarankan di soal
 
 
