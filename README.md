@@ -10,7 +10,9 @@
 
 ### Soal 1
 Penjelasan Soal No. 1
+
 ![image](https://github.com/user-attachments/assets/3b3601f4-009d-4bda-b3d4-740ff979e9ff)
+
 Soal ini memberikan chalenge untuk mencari password dari sebuah data berupa Clues.zip untuk masuk kedalam website, dari penjelasan soal kita perlu membuat sebuah file action.c dimana isi dari file tersebut berupa program untuk
 
 A.Mendownload Clues.zip dan unzip
